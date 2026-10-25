@@ -32,19 +32,7 @@ export default function MapPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("reports")
-      .select(        id,
-        location,
-        fish_type,
-        weight,
-        lure,
-        description,
-        image_url,
-        lat,
-        lng,
-        expires_at,
-        created_at,
-        profiles:user_id (username, avatar_url)
-      \)
+      .select('id, location, fish_type, weight, lure, description, image_url, lat, lng, expires_at, created_at, profiles:user_id (username, avatar_url)')
       .not("lat", "is", null)
       .not("lng", "is", null)
       .gte("expires_at", new Date().toISOString())
