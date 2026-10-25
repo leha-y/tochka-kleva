@@ -1,9 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import "leaflet/dist/leaflet.css";
+
+const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
 
 export default function AddReportPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [L, setL] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
   const [formData, setFormData] = useState({
     location: "",
     fishType: "",
@@ -12,6 +27,32 @@ export default function AddReportPage() {
     description: "",
   });
   const [images, setImages] = useState<File[]>([]);
+  const [lat, setLat] = useState<number | null>(58.6035);
+  const [lng, setLng] = useState<number | null>(49.6680);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    import("leaflet").then((mod) => setL(mod));
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
+
+  if (!isMounted || !L) {
+    return (
+      <div className="min-h-screen hero-background flex items-center justify-center pt-24">
+        <div className="text-white text-xl">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,10 +62,75 @@ export default function AddReportPage() {
     if (e.target.files) setImages(Array.from(e.target.files));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Отчёт отправлен на модерацию! (пока демо)");
+  const handleMapClick = (e: any) => {
+    setLat(e.latlng.lat);
+    setLng(e.latlng.lng);
   };
+
+  const handleMarkerDrag = (e: any) => {
+    const { lat, lng } = e.target.getLatLng();
+    setLat(lat);
+    setLng(lng);
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = \/\.\;
+    const { data, error } = await supabase.storage
+      .from("report-images")
+      .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+
+    const { data: publicData } = supabase.storage.from("report-images").getPublicUrl(fileName);
+    return publicData.publicUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      let imageUrl = null;
+      if (images.length > 0) {
+        imageUrl = await uploadImage(images[0]);
+      }
+
+      const { error } = await supabase.from("reports").insert({
+        user_id: user.id,
+        location: formData.location,
+        fish_type: formData.fishType,
+        weight: formData.weight ? parseFloat(formData.weight) : null,
+        lure: formData.lure,
+        description: formData.description,
+        image_url: imageUrl,
+        lat: lat,
+        lng: lng,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+
+      if (error) throw error;
+
+      setSuccess(true);
+      setTimeout(() => router.push("/reports"), 2000);
+    } catch (err: any) {
+      setError(err.message || "Ошибка отправки отчёта");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const defaultIcon = L.icon({
+    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
 
   return (
     <div className="min-h-screen hero-background">
@@ -39,39 +145,119 @@ export default function AddReportPage() {
           </nav>
 
           <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">📍 Добавить отчёт</h1>
-            <p className="text-gray-300 text-sm">Расскажи сообществу о своей рыбалке</p>
+            <h1 className="text-3xl font-bold text-white mb-2"> Добавить отчёт</h1>
+            <p className="text-gray-300 text-sm">Расскажи сообществу о своей рыбалке. Отметьте место на карте!</p>
           </div>
+
+          {success && (
+            <div className="mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-lg">
+              <span className="text-green-300">✅ Отчёт опубликован! Перенаправление...</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+              <span className="text-red-300">❌ {error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
-              <label className="block text-white font-semibold mb-2">Водоём *</label>
-              <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="р. Вятка, Киров" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition" required />
+              <label className="block text-white font-semibold mb-2">📍 Место ловли (кликни по карте)</label>
+              <div className="h-80 rounded-lg overflow-hidden border border-white/20 mb-3">
+                <MapContainer
+                  center={[lat || 58.6035, lng || 49.6680]}
+                  zoom={10}
+                  scrollWheelZoom={true}
+                  className="h-full w-full"
+                  onClick={handleMapClick}
+                >
+                  <TileLayer
+                    attribution="&copy; OpenStreetMap"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {lat && lng && (
+                    <Marker
+                      position={[lat, lng]}
+                      icon={defaultIcon}
+                      draggable={true}
+                      eventHandlers={{ dragend: handleMarkerDrag }}
+                    >
+                      <Popup>Точка ловли</Popup>
+                    </Marker>
+                  )}
+                </MapContainer>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Координаты: <span className="text-blue-400">{lat?.toFixed(5)}, {lng?.toFixed(5)}</span>
+              </p>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Например: р. Вятка, Киров"
+                className="mt-3 w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition"
+                required
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
                 <label className="block text-white font-semibold mb-2">Вид рыбы *</label>
-                <select name="fishType" value={formData.fishType} onChange={handleChange} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500 transition" required>
+                <select
+                  name="fishType"
+                  value={formData.fishType}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500 transition"
+                  required
+                >
                   <option value="">Выберите</option>
-                  <option>Судак</option><option>Щука</option><option>Окунь</option>
-                  <option>Лещ</option><option>Сом</option><option>Карась</option>
+                  <option>Судак</option>
+                  <option>Щука</option>
+                  <option>Окунь</option>
+                  <option>Лещ</option>
+                  <option>Сом</option>
+                  <option>Карась</option>
                   <option>Другой</option>
                 </select>
               </div>
               <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
                 <label className="block text-white font-semibold mb-2">Вес (кг)</label>
-                <input type="number" step="0.1" name="weight" value={formData.weight} onChange={handleChange} placeholder="1.8" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition" />
+                <input
+                  type="number"
+                  step="0.1"
+                  name="weight"
+                  value={formData.weight}
+                  onChange={handleChange}
+                  placeholder="1.8"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition"
+                />
               </div>
               <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
                 <label className="block text-white font-semibold mb-2">Приманка</label>
-                <input type="text" name="lure" value={formData.lure} onChange={handleChange} placeholder="Джиг, виброхвост" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition" />
+                <input
+                  type="text"
+                  name="lure"
+                  value={formData.lure}
+                  onChange={handleChange}
+                  placeholder="Джиг, виброхвост"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition"
+                />
               </div>
             </div>
 
             <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
               <label className="block text-white font-semibold mb-2">Расскажи о рыбалке *</label>
-              <textarea name="description" value={formData.description} onChange={handleChange} rows={6} placeholder="Где ловил, какая погода, как клевало..." className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition resize-none" required />
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={6}
+                placeholder="Где ловил, какая погода, как клевало..."
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition resize-none"
+                required
+              />
             </div>
 
             <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
@@ -86,15 +272,25 @@ export default function AddReportPage() {
               {images.length > 0 && (
                 <div className="mt-4 grid grid-cols-4 gap-2">
                   {images.map((img, idx) => (
-                    <div key={idx} className="aspect-square bg-white/10 rounded-lg flex items-center justify-center text-xs text-gray-400">{img.name}</div>
+                    <div key={idx} className="aspect-square bg-white/10 rounded-lg flex items-center justify-center text-xs text-gray-400">
+                      {img.name}
+                    </div>
                   ))}
                 </div>
               )}
             </div>
 
             <div className="flex gap-4">
-              <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg">Опубликовать отчёт</button>
-              <Link href="/reports" className="px-8 py-4 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition font-semibold text-lg text-center">Отмена</Link>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg disabled:opacity-50"
+              >
+                {loading ? "Публикация..." : "Опубликовать отчёт"}
+              </button>
+              <Link href="/reports" className="px-8 py-4 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition font-semibold text-lg text-center">
+                Отмена
+              </Link>
             </div>
           </form>
         </div>
