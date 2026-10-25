@@ -183,7 +183,7 @@ export default function MapPage() {
                       <Popup>
                         <div className="text-gray-800 font-sans max-w-xs">
                           <strong className="text-lg block mb-1">{report.location}</strong>
-                          <span className="text-sm block">🐟 {report.fish_type}{report.weight &&  —  кг}</span>
+                          <span className="text-sm block">🐟 {report.fish_type}{report.weight && " — " + report.weight + " кг"}</span>
                           <span className="text-sm block text-gray-600">🎣 {report.lure || "Не указано"}</span>
                           {report.profiles && (
                             <span className="text-xs text-gray-500 mt-1 block">
