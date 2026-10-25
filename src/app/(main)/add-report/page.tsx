@@ -75,7 +75,7 @@ export default function AddReportPage() {
 
   const uploadImage = async (file: File): Promise<string | null> => {
     const fileExt = file.name.split(".").pop();
-    const fileName = \/\.\;
+    const fileName = user.id + "/" + Date.now() + "." + fileExt;
     const { data, error } = await supabase.storage
       .from("report-images")
       .upload(fileName, file, { cacheControl: "3600", upsert: false });
