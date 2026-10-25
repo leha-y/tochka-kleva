@@ -3,53 +3,72 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { supabase } from "@/lib/supabase";
 import "leaflet/dist/leaflet.css";
 
-// Динамический импорт компонентов карты с отключенным SSR (исправляет ошибку window)
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false }
-);
-const Popup = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Popup),
-  { ssr: false }
-);
-
-const mockSpots = [
-  { id: 1, name: "р. Вятка", type: "Река", fish: ["Судак", "Щука", "Окунь"], lat: 58.6035, lng: 49.6680, reports: 24, rating: 4.8 },
-  { id: 2, name: "оз. Орловское", type: "Озеро", fish: ["Щука", "Карась", "Лещ"], lat: 58.5500, lng: 49.7000, reports: 18, rating: 4.5 },
-  { id: 3, name: "р. Чепца", type: "Река", fish: ["Лещ", "Плотва", "Голавль"], lat: 58.7000, lng: 49.6500, reports: 12, rating: 4.2 },
-  { id: 4, name: "Воткинское водохранилище", type: "Водохранилище", fish: ["Судак", "Сом", "Лещ"], lat: 58.8000, lng: 49.8000, reports: 31, rating: 4.9 },
-  { id: 5, name: "оз. Светлое", type: "Озеро", fish: ["Карась", "Окунь", "Щука"], lat: 58.5000, lng: 49.7500, reports: 9, rating: 4.0 },
-  { id: 6, name: "р. Кама", type: "Река", fish: ["Сом", "Судак", "Жерех"], lat: 58.6500, lng: 49.9000, reports: 45, rating: 4.7 },
-];
+const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
 
 export default function MapPage() {
-  const [selectedSpot, setSelectedSpot] = useState<typeof mockSpots[0] | null>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [filterType, setFilterType] = useState("all");
-  const [isMounted, setIsMounted] = useState(false);
   const [L, setL] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setIsMounted(true);
-    import("leaflet").then((mod) => {
-      setL(mod);
-    });
+    import("leaflet").then((mod) => setL(mod));
   }, []);
 
-  const filteredSpots = filterType === "all" 
-    ? mockSpots 
-    : mockSpots.filter(s => s.type.toLowerCase() === filterType);
+  useEffect(() => {
+    fetchReports();
+    const interval = setInterval(fetchReports, 30000); // Обновляем каждые 30 сек
+    return () => clearInterval(interval);
+  }, []);
 
-  if (!isMounted || !L) {
+  const fetchReports = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("reports")
+      .select(        id,
+        location,
+        fish_type,
+        weight,
+        lure,
+        description,
+        image_url,
+        lat,
+        lng,
+        expires_at,
+        created_at,
+        profiles:user_id (username, avatar_url)
+      \)
+      .not("lat", "is", null)
+      .not("lng", "is", null)
+      .gte("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Ошибка загрузки отчётов:", error);
+    } else {
+      setReports(data || []);
+    }
+    setLoading(false);
+  };
+
+  const filteredReports = filterType === "all" 
+    ? reports 
+    : reports.filter(r => {
+        const type = r.location?.toLowerCase() || "";
+        if (filterType === "река") return type.includes("р.") || type.includes("река");
+        if (filterType === "озеро") return type.includes("оз.") || type.includes("озеро");
+        if (filterType === "водохранилище") return type.includes("водохранилище");
+        return true;
+      });
+
+  if (!L) {
     return (
       <div className="min-h-screen hero-background flex items-center justify-center pt-24">
         <div className="text-white text-xl">Загрузка карты...</div>
@@ -65,11 +84,18 @@ export default function MapPage() {
     iconAnchor: [12, 41],
   });
 
+  const getLocationType = (location: string) => {
+    const loc = location?.toLowerCase() || "";
+    if (loc.includes("р.") || loc.includes("река")) return "Река";
+    if (loc.includes("оз.") || loc.includes("озеро")) return "Озеро";
+    if (loc.includes("водохранилище")) return "Водохранилище";
+    return "Другое";
+  };
+
   return (
     <div className="min-h-screen hero-background">
       <div className="relative z-10 pt-24 pb-12 px-4">
         <div className="max-w-7xl mx-auto">
-          
           <nav className="flex items-center gap-2 text-gray-400 text-sm mb-6">
             <Link href="/" className="hover:text-white transition">Главная</Link>
             <span>→</span>
@@ -80,7 +106,7 @@ export default function MapPage() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-white mb-1">🗺️ Карта водоёмов</h1>
-                <p className="text-gray-300 text-sm">Найди лучшее место для рыбалки рядом с тобой</p>
+                <p className="text-gray-300 text-sm">Реальные отчёты рыбаков за последние 7 дней</p>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {["all", "река", "озеро", "водохранилище"].map((type) => (
@@ -98,38 +124,51 @@ export default function MapPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <aside className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-4 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
-              <h3 className="text-lg font-bold text-white mb-3">Водоёмы ({filteredSpots.length})</h3>
-              <div className="space-y-2">
-                {filteredSpots.map((spot) => (
-                  <button
-                    key={spot.id}
-                    onClick={() => setSelectedSpot(spot)}
-                    className={
-                      "w-full text-left p-3 rounded-lg transition " +
-                      (selectedSpot?.id === spot.id
-                        ? "bg-blue-600/30 border border-blue-500/30"
-                        : "bg-white/5 border border-white/10 hover:bg-white/10")
-                    }
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="text-white font-semibold text-sm">{spot.name}</h4>
-                      <span className="text-yellow-400 text-xs">★ {spot.rating}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <span>{spot.type}</span>
-                      <span>·</span>
-                      <span>{spot.reports} отчётов</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {spot.fish.map((f, idx) => (
-                        <span key={idx} className="px-2 py-0.5 bg-blue-600/20 text-blue-300 text-xs rounded-full">
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <h3 className="text-lg font-bold text-white mb-3">
+                Отчёты ({filteredReports.length})
+                {loading && <span className="text-gray-400 text-sm ml-2"></span>}
+              </h3>
+              {filteredReports.length === 0 ? (
+                <div className="text-gray-400 text-center py-8">
+                  <p>Пока нет отчётов</p>
+                  <Link href="/add-report" className="text-blue-400 hover:text-blue-300 mt-2 inline-block">
+                    Будь первым!
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredReports.map((report) => (
+                    <button
+                      key={report.id}
+                      onClick={() => setSelectedReport(report)}
+                      className={
+                        "w-full text-left p-3 rounded-lg transition " +
+                        (selectedReport?.id === report.id
+                          ? "bg-blue-600/30 border border-blue-500/30"
+                          : "bg-white/5 border border-white/10 hover:bg-white/10")
+                      }
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="text-white font-semibold text-sm">{report.location}</h4>
+                        <span className="text-yellow-400 text-xs"> {report.fish_type}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span>{getLocationType(report.location)}</span>
+                        <span>·</span>
+                        <span>{report.weight ? report.weight + " кг" : ""}</span>
+                      </div>
+                      {report.profiles && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs">
+                            {report.profiles.username?.[0]?.toUpperCase() || "U"}
+                          </div>
+                          <span className="text-gray-400 text-xs">{report.profiles.username || "Аноним"}</span>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </aside>
 
             <div className="lg:col-span-3 h-[600px] rounded-xl overflow-hidden border border-white/20 backdrop-blur-md relative z-0">
@@ -140,26 +179,36 @@ export default function MapPage() {
                 className="h-full w-full"
               >
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  attribution="&copy; OpenStreetMap"
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {filteredSpots.map((spot) => (
-                  <Marker 
-                    key={spot.id} 
-                    position={[spot.lat, spot.lng]} 
-                    icon={defaultIcon}
-                    eventHandlers={{
-                      click: () => setSelectedSpot(spot),
-                    }}
-                  >
-                    <Popup>
-                      <div className="text-gray-800 font-sans">
-                        <strong className="text-lg block mb-1">{spot.name}</strong>
-                        <span className="text-sm">{spot.type} • Рейтинг: {spot.rating}</span><br/>
-                        <span className="text-sm text-blue-600">Рыба: {spot.fish.join(", ")}</span>
-                      </div>
-                    </Popup>
-                  </Marker>
+                {filteredReports.map((report) => (
+                  report.lat && report.lng && (
+                    <Marker 
+                      key={report.id} 
+                      position={[report.lat, report.lng]} 
+                      icon={defaultIcon}
+                      eventHandlers={{
+                        click: () => setSelectedReport(report),
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-gray-800 font-sans max-w-xs">
+                          <strong className="text-lg block mb-1">{report.location}</strong>
+                          <span className="text-sm block">🐟 {report.fish_type}{report.weight &&  —  кг}</span>
+                          <span className="text-sm block text-gray-600">🎣 {report.lure || "Не указано"}</span>
+                          {report.profiles && (
+                            <span className="text-xs text-gray-500 mt-1 block">
+                              👤 {report.profiles.username || "Аноним"}
+                            </span>
+                          )}
+                          {report.description && (
+                            <p className="text-xs text-gray-600 mt-2 line-clamp-2">{report.description}</p>
+                          )}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  )
                 ))}
               </MapContainer>
             </div>
