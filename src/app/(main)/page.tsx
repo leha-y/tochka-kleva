@@ -32,10 +32,6 @@ const categories = [
   { slug: "rashodniki", name: "Расходники и прочее", icon: Magnet, color: "from-red-500 to-red-700", count: "1 847" },
 ];
 
-const mockReports = [
-  { id: 1, author: "Алексей", location: "р. Вятка", time: "2ч назад", text: "Судак 1.8 кг на джиг", likes: 24 },
-  { id: 2, author: "Дмитрий", location: "оз. Орловское", time: "5ч назад", text: "Щука 3.2 кг на воблер", likes: 18 },
-];
 
 const mockChat = [
   { id: 1, user: "Рыбак_Киров", time: "14:32", text: "Всем привет! Кто сегодня на Вятку?" },
@@ -124,6 +120,7 @@ const stats = [
 
 export default async function HomePage() {
   const products = await getLatestProducts();
+    const reports = await getLatestReports();
 
   return (
     <div className="min-h-screen hero-background">
@@ -144,7 +141,7 @@ export default async function HomePage() {
               <Link href="/reports" className="text-blue-400 hover:text-blue-300 transition text-sm">Все →</Link>
             </div>
             <div className="space-y-3 max-h-80 overflow-y-auto">
-              {mockReports.map((report) => (
+              {reports.map((report) => (
                 <div key={report.id} className="bg-white/5 border border-white/10 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
