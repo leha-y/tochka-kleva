@@ -146,10 +146,10 @@ export default async function HomePage() {
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                        {report.author[0]}
+                        {(report.profiles?.username || "А")[0].toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-white text-sm font-semibold">{report.author}</div>
+                        <div className="text-white text-sm font-semibold">{report.profiles?.username || "Аноним"}</div>
                         <div className="text-gray-400 text-xs">📍 {report.location} · {report.time}</div>
                       </div>
                     </div>
