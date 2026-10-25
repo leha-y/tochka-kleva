@@ -2,18 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { icon } from "leaflet";
+import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 
-// Фикс для иконок маркеров в Next.js
-const defaultIcon = icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+// Динамический импорт компонентов карты с отключенным SSR (исправляет ошибку window)
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Popup),
+  { ssr: false }
+);
 
 const mockSpots = [
   { id: 1, name: "р. Вятка", type: "Река", fish: ["Судак", "Щука", "Окунь"], lat: 58.6035, lng: 49.6680, reports: 24, rating: 4.8 },
@@ -28,16 +36,34 @@ export default function MapPage() {
   const [selectedSpot, setSelectedSpot] = useState<typeof mockSpots[0] | null>(null);
   const [filterType, setFilterType] = useState("all");
   const [isMounted, setIsMounted] = useState(false);
+  const [L, setL] = useState<any>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    import("leaflet").then((mod) => {
+      setL(mod);
+    });
   }, []);
 
   const filteredSpots = filterType === "all" 
     ? mockSpots 
     : mockSpots.filter(s => s.type.toLowerCase() === filterType);
 
-  if (!isMounted) return null;
+  if (!isMounted || !L) {
+    return (
+      <div className="min-h-screen hero-background flex items-center justify-center pt-24">
+        <div className="text-white text-xl">Загрузка карты...</div>
+      </div>
+    );
+  }
+
+  const defaultIcon = L.icon({
+    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
 
   return (
     <div className="min-h-screen hero-background">
