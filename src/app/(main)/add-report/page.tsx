@@ -9,6 +9,38 @@ import { supabase } from "@/lib/supabase";
 import ClickHandler from "@/components/ClickHandler";
 import "leaflet/dist/leaflet.css";
 
+// Функция для получения названия места по координатам (Reverse Geocoding)
+async function getLocationName(lat: number, lng: number): Promise<string> {
+  try {
+    const response = await fetch(
+      \https://nominatim.openstreetmap.org/reverse?format=json&lat=\&lon=\&zoom=18&addressdetails=1    );
+    const data = await response.json();
+    
+    // Пробуем получить название водоёма или реки
+    const address = data.address;
+    if (address.waterway) {
+      return \р. \;
+    }
+    if (address.river) {
+      return \р. \;
+    }
+    if (address.lake) {
+      return \оз. \;
+    }
+    if (address.reservoir) {
+      return \водохранилище \;
+    }
+    if (address.town || address.city || address.village) {
+      const place = address.town || address.city || address.village;
+      return \, \;
+    }
+    return data.display_name?.split(',').slice(0, 2).join(', ') || '';
+  } catch (error) {
+    console.error('Ошибка получения места:', error);
+    return '';
+  }
+}
+
 const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
@@ -63,10 +95,16 @@ export default function AddReportPage() {
     if (e.target.files) setImages(Array.from(e.target.files));
   };
 
-  const handleMapClick = (lat: number, lng: number) => {
+  const handleMapClick = async (lat: number, lng: number) => {
     console.log("Клик по карте:", lat, lng);
     setLat(lat);
     setLng(lng);
+    
+    // Автоматически заполняем поле места
+    const locationName = await getLocationName(lat, lng);
+    if (locationName) {
+      setFormData({ ...formData, location: locationName });
+    }
   };
 
   const handleMarkerDrag = (e: any) => {
