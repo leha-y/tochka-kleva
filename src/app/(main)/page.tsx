@@ -14,6 +14,15 @@ async function getLatestProducts() {
   return data || [];
 }
 
+async function getLatestReports() {
+  const { data } = await supabase
+    .from("reports")
+    .select("id, location, fish_type, weight, lure, description, image_url, created_at, profiles:user_id (username)")
+    .order("created_at", { ascending: false })
+    .limit(5);
+  return data || [];
+}
+
 const categories = [
   { slug: "snasti", name: "Снасти и оснастка", icon: FishingRod, color: "from-blue-500 to-blue-700", count: "2 450" },
   { slug: "lodki", name: "Лодки и моторы", icon: Anchor, color: "from-cyan-500 to-cyan-700", count: "186" },
