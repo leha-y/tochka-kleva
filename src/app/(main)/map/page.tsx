@@ -243,8 +243,6 @@ export default function MapPage() {
                     </div>
                     <div className="bg-white/5 rounded-lg p-3">
                       <div className="text-gray-400 text-xs mb-1">Автор</div>
-                      <div className="text-white font-semibold">{selectedReport.profiles?.username || "Аноним"}</div>
-                    </div>
                   </div>
                   
                   {selectedReport.description && (
@@ -265,14 +263,8 @@ export default function MapPage() {
                     </button>
                     <a href={"https://www.openstreetmap.org/?mlat=" + selectedReport.lat + "&mlon=" + selectedReport.lng + "#map=16/" + selectedReport.lat + "/" + selectedReport.lng} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition font-semibold text-center">
                       Открыть в карте
-                    </a>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
-        </div>
-      </div>
     </div>
   );
 }
