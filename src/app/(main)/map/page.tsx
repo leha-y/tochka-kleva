@@ -93,8 +93,15 @@ export default function MapPage() {
           <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 mb-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-1">🗺️ Карта водоёмов</h1>
-                <p className="text-gray-300 text-sm">Реальные отчёты рыбаков за последние 7 дней</p>
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <h1 className="text-3xl font-bold text-white mb-1">🗺️ Карта водоёмов</h1>
+                    <p className="text-gray-300 text-sm">Реальные отчёты рыбаков за последние 7 дней</p>
+                  </div>
+                  <Link href="/add-report" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                    + Добавить отчёт
+                  </Link>
+                </div>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {["all", "река", "озеро", "водохранилище"].map((type) => (
