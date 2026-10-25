@@ -274,8 +274,19 @@ export default function AddReportPage() {
               {images.length > 0 && (
                 <div className="mt-4 grid grid-cols-4 gap-2">
                   {images.map((img, idx) => (
-                    <div key={idx} className="aspect-square bg-white/10 rounded-lg flex items-center justify-center text-xs text-gray-400">
-                      {img.name}
+                    <div key={idx} className="relative aspect-square bg-white/10 rounded-lg overflow-hidden group">
+                      <img
+                        src={URL.createObjectURL(img)}
+                        alt={img.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition"
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
