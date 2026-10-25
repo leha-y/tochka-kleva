@@ -14,6 +14,7 @@ const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr:
 export default function MapPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [L, setL] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -135,7 +136,7 @@ export default function MapPage() {
                   {filteredReports.map((report) => (
                     <button
                       key={report.id}
-                      onClick={() => setSelectedReport(report)}
+                      onClick={() => { setSelectedReport(report); setShowModal(true); }}
                       className={
                         "w-full text-left p-3 rounded-lg transition " +
                         (selectedReport?.id === report.id
@@ -208,6 +209,68 @@ export default function MapPage() {
               </MapContainer>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+          {/* МОДАЛЬНОЕ ОКНО С ДЕТАЛЯМИ ОТЧЁТА */}
+          {showModal && selectedReport && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+              <div className="bg-gray-900 border border-white/20 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-white">{selectedReport.location}</h2>
+                    <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-2xl">×</button>
+                  </div>
+                  
+                  {selectedReport.image_url && (
+                    <img src={selectedReport.image_url} alt="Улов" className="w-full h-64 object-cover rounded-xl mb-4" />
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-400 text-xs mb-1">Вид рыбы</div>
+                      <div className="text-white font-semibold">{selectedReport.fish_type}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-400 text-xs mb-1">Вес</div>
+                      <div className="text-white font-semibold">{selectedReport.weight ? selectedReport.weight + " кг" : "Не указан"}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-400 text-xs mb-1">Приманка</div>
+                      <div className="text-white font-semibold">{selectedReport.lure || "Не указана"}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-400 text-xs mb-1">Автор</div>
+                      <div className="text-white font-semibold">{selectedReport.profiles?.username || "Аноним"}</div>
+                    </div>
+                  </div>
+                  
+                  {selectedReport.description && (
+                    <div className="bg-white/5 rounded-lg p-4 mb-4">
+                      <div className="text-gray-400 text-xs mb-2">Описание</div>
+                      <p className="text-white">{selectedReport.description}</p>
+                    </div>
+                  )}
+                  
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <div className="text-gray-400 text-xs mb-1">Координаты</div>
+                    <div className="text-blue-400 font-mono text-sm">{selectedReport.lat?.toFixed(5)}, {selectedReport.lng?.toFixed(5)}</div>
+                  </div>
+                  
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setShowModal(false)} className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                      Закрыть
+                    </button>
+                    <a href={"https://www.openstreetmap.org/?mlat=" + selectedReport.lat + "&mlon=" + selectedReport.lng + "#map=16/" + selectedReport.lat + "/" + selectedReport.lng} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition font-semibold text-center">
+                      Открыть в карте
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
