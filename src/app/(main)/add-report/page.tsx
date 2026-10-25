@@ -29,7 +29,7 @@ export default function AddReportPage() {
   const [images, setImages] = useState<File[]>([]);
   const [lat, setLat] = useState<number | null>(58.6035);
   const [lng, setLng] = useState<number | null>(49.6680);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -91,7 +91,7 @@ export default function AddReportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
     setError("");
 
     try {
@@ -120,7 +120,7 @@ export default function AddReportPage() {
     } catch (err: any) {
       setError(err.message || "Ошибка отправки отчёта");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -283,10 +283,10 @@ export default function AddReportPage() {
             <div className="flex gap-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
                 className="flex-1 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg disabled:opacity-50"
               >
-                {loading ? "Публикация..." : "Опубликовать отчёт"}
+                {isLoading ? "Публикация..." : "Опубликовать отчёт"}
               </button>
               <Link href="/reports" className="px-8 py-4 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition font-semibold text-lg text-center">
                 Отмена
