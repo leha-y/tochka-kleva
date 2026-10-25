@@ -119,7 +119,7 @@ export default function MapPage() {
               {filteredReports.length === 0 ? (
                 <div className="text-gray-400 text-center py-8">
                   <p>Пока нет отчётов</p>
-                  <Link href="/add-report" className="text-blue-400 hover:text-blue-300 mt-2 inline-block">
+                  <Link href="/add-report" className="text-blue-400 hover:text-blue-300 mt-2 inline-block" onClick={(e) => { e.preventDefault(); window.location.href = "/add-report"; }}>
                     Будь первым!
                   </Link>
                 </div>
