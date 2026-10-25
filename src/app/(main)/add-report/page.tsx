@@ -15,7 +15,7 @@ const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr:
 
 export default function AddReportPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [L, setL] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -39,12 +39,12 @@ export default function AddReportPage() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.push("/login");
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
-  if (!isMounted || !L) {
+  if (loading || !isMounted || !L) {
     return (
       <div className="min-h-screen hero-background flex items-center justify-center pt-24">
         <div className="text-white text-xl">Загрузка...</div>
