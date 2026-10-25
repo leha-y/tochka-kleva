@@ -214,14 +214,14 @@ export default function AddReportPage() {
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500 transition"
                   required
                 >
-                  <option value="">Выберите</option>
-                  <option>Судак</option>
-                  <option>Щука</option>
-                  <option>Окунь</option>
-                  <option>Лещ</option>
-                  <option>Сом</option>
-                  <option>Карась</option>
-                  <option>Другой</option>
+                  <option value="" style={{backgroundColor: "#1f2937", color: "white"}}>Выберите</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Судак</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Щука</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Окунь</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Лещ</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Сом</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Карась</option>
+                  <option style={{backgroundColor: "#1f2937", color: "white"}}>Другой</option>
                 </select>
               </div>
               <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6">
