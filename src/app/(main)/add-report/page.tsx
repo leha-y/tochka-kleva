@@ -9,13 +9,64 @@ import { supabase } from "@/lib/supabase";
 import ClickHandler from "@/components/ClickHandler";
 import "leaflet/dist/leaflet.css";
 
+const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
 
-const handleMapClick = (lat: number, lng: number) => {
+export default function AddReportPage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [L, setL] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const [formData, setFormData] = useState({
+    location: "",
+    fishType: "",
+    weight: "",
+    lure: "",
+    description: "",
+  });
+  const [images, setImages] = useState<File[]>([]);
+  const [lat, setLat] = useState<number | null>(58.6035);
+  const [lng, setLng] = useState<number | null>(49.6680);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    import("leaflet").then((mod) => setL(mod));
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !isMounted || !L) {
+    return (
+      <div className="min-h-screen hero-background flex items-center justify-center pt-24">
+        <div className="text-white text-xl">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) setImages(Array.from(e.target.files));
+  };
+
+  const handleMapClick = (lat: number, lng: number) => {
     console.log("Клик по карте:", lat, lng);
     setLat(lat);
     setLng(lng);
-    
-      };
   };
 
   const handleMarkerDrag = (e: any) => {
