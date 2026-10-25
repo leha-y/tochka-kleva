@@ -184,7 +184,7 @@ const handleMapClick = async (lat: number, lng: number) => {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="Например: ""р. " + address.river" + address.waterwayВятка, Киров"
+                placeholder="Например: р. Вятка, Киров"
                 className="mt-3 w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition"
                 required
               />

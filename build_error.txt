@@ -1,0 +1,46 @@
+﻿
+> tochka-kleva@0.1.0 build
+> next build
+
+тЦ▓ Next.js 16.4.2 (Turbopack)
+- Environments: .env.local
+node.exe : тЪа `eslint` configuration in next.config.ts is no l
+onger supported. See more info here: https://nextjs.org/docs/ap
+p/api-reference/cli/next#next-lint-options
+строка:1 знак:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs
+/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo          : NotSpecified: (тЪа `eslint` co.. 
+   .xt-lint-options:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+тЪа Invalid next.config.ts options detected: 
+тЪа     Unrecognized key(s) in object: 'eslint'
+тЪа See more info here: https://nextjs.org/docs/messages/invali
+d-next-config
+тЬУ Running next.config.ts took 103ms
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 error:
+./src/app/(main)/add-report/page.tsx:187:49
+Error: Expected '</', got 'string literal'
+  [90m185 |[0m ...        value={formData.location}
+  [90m186 |[0m ...        onChange={handleChange}
+[31m[1m>[0m [90m187 |[0m ...        placeholder=[32m"╨Э╨░
+╨┐╤А╨╕╨╝╨╡╤А: "[0m[32m"╤А. "[0m + address.river[32m" + addr
+ess.waterway╨Т╤П╤В╨║╨░, ╨Ъ╨╕╤А╨╛╨▓"[0m
+  [90m    |[0m                                    [31m[1m^^
+^^^[0m
+  [90m188 |[0m ...        className=[32m"mt-3 w-full px-4 py
+-3 bg-white/10 border border-white/20 rounded-lg...[0m
+  [90m189 |[0m ...        required
+  [90m190 |[0m ...      />
+
+Parsing ecmascript source code failed
+
+
+    at ignore-listed frames
