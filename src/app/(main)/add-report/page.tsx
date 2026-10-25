@@ -12,23 +12,23 @@ import "leaflet/dist/leaflet.css";
 // Функция для получения названия места по координатам (Reverse Geocoding)
 async function getLocationName(lat: number, lng: number): Promise<string> {
   try {
-    const response = await fetch(
-      \https://nominatim.openstreetmap.org/reverse?format=json&lat=\&lon=\&zoom=18&addressdetails=1    );
+    const url = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lng + "&zoom=18&addressdetails=1";
+    const response = await fetch(url);
     const data = await response.json();
     
     // Пробуем получить название водоёма или реки
     const address = data.address;
     if (address.waterway) {
-      return \р. \;
+      return \""р. " + address.river" + address.waterway\;
     }
     if (address.river) {
-      return \р. \;
+      return \""р. " + address.river" + address.waterway\;
     }
     if (address.lake) {
-      return \оз. \;
+      return \"оз. " + address.lake\;
     }
     if (address.reservoir) {
-      return \водохранилище \;
+      return \"водохранилище " + address.reservoir\;
     }
     if (address.town || address.city || address.village) {
       const place = address.town || address.city || address.village;
@@ -236,7 +236,7 @@ export default function AddReportPage() {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="Например: р. Вятка, Киров"
+                placeholder="Например: ""р. " + address.river" + address.waterwayВятка, Киров"
                 className="mt-3 w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition"
                 required
               />
