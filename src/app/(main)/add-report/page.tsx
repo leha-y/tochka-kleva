@@ -19,83 +19,31 @@ async function getLocationName(lat: number, lng: number): Promise<string> {
     // Пробуем получить название водоёма или реки
     const address = data.address;
     if (address.waterway) {
-      return \""р. " + address.river" + address.waterway\;
+      return "р. " + address.waterway;
     }
     if (address.river) {
-      return \""р. " + address.river" + address.waterway\;
+      return "р. " + address.river;
     }
     if (address.lake) {
-      return \"оз. " + address.lake\;
+      return "оз. " + address.lake;
     }
     if (address.reservoir) {
-      return \"водохранилище " + address.reservoir\;
+      return "водохранилище " + address.reservoir;
     }
     if (address.town || address.city || address.village) {
       const place = address.town || address.city || address.village;
-      return \, \;
+      const displayName = data.display_name || "";
+      return displayName.split(",")[0] + ", " + place;
     }
-    return data.display_name?.split(',').slice(0, 2).join(', ') || '';
+    const displayName = data.display_name || "";
+    return displayName.split(",").slice(0, 2).join(", ");
   } catch (error) {
-    console.error('Ошибка получения места:', error);
-    return '';
+    console.error("Ошибка получения места:", error);
+    return "";
   }
 }
 
-const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
-const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
-
-export default function AddReportPage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-  const [L, setL] = useState<any>(null);
-  const [isMounted, setIsMounted] = useState(false);
-
-  const [formData, setFormData] = useState({
-    location: "",
-    fishType: "",
-    weight: "",
-    lure: "",
-    description: "",
-  });
-  const [images, setImages] = useState<File[]>([]);
-  const [lat, setLat] = useState<number | null>(58.6035);
-  const [lng, setLng] = useState<number | null>(49.6680);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    import("leaflet").then((mod) => setL(mod));
-  }, []);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
-
-  if (loading || !isMounted || !L) {
-    return (
-      <div className="min-h-screen hero-background flex items-center justify-center pt-24">
-        <div className="text-white text-xl">Загрузка...</div>
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setImages(Array.from(e.target.files));
-  };
-
-  const handleMapClick = async (lat: number, lng: number) => {
+const handleMapClick = async (lat: number, lng: number) => {
     console.log("Клик по карте:", lat, lng);
     setLat(lat);
     setLng(lng);
