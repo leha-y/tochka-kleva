@@ -12,6 +12,7 @@ const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapCont
 const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
 const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
+const useMapEvents = dynamic(() => import("react-leaflet").then((m) => m.useMapEvents), { ssr: false });
 
 export default function AddReportPage() {
   const router = useRouter();
@@ -61,6 +62,17 @@ export default function AddReportPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setImages(Array.from(e.target.files));
   };
+
+  // Компонент для обработки кликов по карте
+  function MapClickHandler() {
+    useMapEvents({
+      click: (e) => {
+        setLat(e.latlng.lat);
+        setLng(e.latlng.lng);
+      },
+    });
+    return null;
+  }
 
   const handleMapClick = (e: any) => {
     setLat(e.latlng.lat);
@@ -170,12 +182,12 @@ export default function AddReportPage() {
                   zoom={10}
                   scrollWheelZoom={true}
                   className="h-full w-full"
-                  onClick={handleMapClick}
                 >
                   <TileLayer
                     attribution="&copy; OpenStreetMap"
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
+                  <MapClickHandler />
                   {lat && lng && (
                     <Marker
                       position={[lat, lng]}
