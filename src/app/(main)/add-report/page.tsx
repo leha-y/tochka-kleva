@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import ClickHandler from "@/components/ClickHandler";
 import "leaflet/dist/leaflet.css";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
@@ -62,10 +63,10 @@ export default function AddReportPage() {
     if (e.target.files) setImages(Array.from(e.target.files));
   };
 
-  const handleMapClick = (e: any) => {
-    console.log("Клик по карте:", e.latlng);
-    setLat(e.latlng.lat);
-    setLng(e.latlng.lng);
+  const handleMapClick = (lat: number, lng: number) => {
+    console.log("Клик по карте:", lat, lng);
+    setLat(lat);
+    setLng(lng);
   };
 
   const handleMarkerDrag = (e: any) => {
@@ -171,14 +172,12 @@ export default function AddReportPage() {
                   zoom={10}
                   scrollWheelZoom={true}
                   className="h-full w-full"
-                  eventHandlers={{
-                    click: handleMapClick,
-                  }}
                 >
                   <TileLayer
                     attribution="&copy; OpenStreetMap"
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
+                  <ClickHandler onMapClick={handleMapClick} />
                   {lat && lng && (
                     <Marker
                       position={[lat, lng]}
