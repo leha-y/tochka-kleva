@@ -20,7 +20,7 @@ export default function ReportsPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("reports")
-      .select("id, user_id, location, fish_type, weight, lure, description, image_url, lat, lng, created_at, profiles:user_id (username, email)")
+      .select("id, user_id, location, fish_type, weight, lure, description, image_url, lat, lng, created_at, profiles:user_id (username)")
       .order("created_at", { ascending: false });
 
     if (error) {
