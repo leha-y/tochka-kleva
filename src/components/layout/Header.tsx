@@ -29,10 +29,10 @@ export default function Header() {
           <span className="text-xl font-bold text-white">Точка Клёва</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/categories/spinning" className="text-gray-300 hover:text-white transition text-sm">Спиннинг</Link>
-          <Link href="/categories/fider" className="text-gray-300 hover:text-white transition text-sm">Фидер</Link>
-          <Link href="/categories/poplavok" className="text-gray-300 hover:text-white transition text-sm">Поплавок</Link>
+        <nav className="hidden md:flex items-center gap-4">
+          <Link href="/contacts" className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 hover:text-amber-200 transition text-sm font-semibold rounded-lg flex items-center gap-1.5">
+            💬 Жалобы и предложения
+          </Link>
           <Link href="/reports" className="text-blue-400 hover:text-blue-300 transition text-sm font-semibold">С водоёма</Link>
           <Link href="/map" className="text-gray-300 hover:text-white transition text-sm">Карта</Link>
           <Link href="/forecast" className="text-gray-300 hover:text-white transition text-sm">Прогноз</Link>
